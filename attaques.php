@@ -4,6 +4,7 @@
  *
  * @package Attaques
  * @author Verité modifié par ericc
+ * @translation KyleCo76
  * @link http://www.ogsteam.fr
  * @version : 0.8a
  */
@@ -28,6 +29,8 @@ if ($septjours < 1) $septjours = 1;
 if ($yesterday < 1) $yesterday = 1;
 
 
+require_once("mod/attaques/languages/" . $ui_lang . "/lang_main.php");
+
 //On verifie si il y a des attaques qui ne sont pas du mois actuel
 $query = "SELECT MONTH(FROM_UNIXTIME(attack_date)) AS month, YEAR(FROM_UNIXTIME(attack_date)) AS year, SUM(attack_metal) AS metal, SUM(attack_cristal) AS cristal, SUM(attack_deut) AS deut, SUM(attack_pertes) as pertes FROM " . TABLE_ATTAQUES_ATTAQUES . " WHERE attack_user_id=" . $user_data['user_id'] . " AND MONTH(FROM_UNIXTIME(attack_date)) <> $mois GROUP BY month, year";
 $result = $db->sql_query($query);
@@ -36,7 +39,7 @@ $nb_result = $db->sql_numrows($result);
 
 //Si le nombre d'attaques n'appartenant pas au mois actuel est different de 0, on entre alors dans la partie sauvegarde des résultats anterieurs
 if ($nb_result != 0) {
-    echo "<font color='#FF0000'>Vos attaques du ou des mois précédent(s) ont été supprimé(s). Seuls les gains restent accessibles dans la partie Espace Archives<br>La liste de vos attaques qui viennent d'être supprimées est consultable une dernière fois. Pensez à la sauvegarder !!!</font>";
+    echo "<font color='#FF0000'>". $lang['MOD_ATTAQUES_SUPPRIME_MOIS'] ."</font>";
 // On récupère les paramètres bbcolors
     $query2 = "SELECT value FROM `" . TABLE_MOD_CFG . "` WHERE `mod`='Attaques' and `config`='bbcodes'";
     $result2 = $db->sql_query($query2);
@@ -76,20 +79,20 @@ if ($nb_result != 0) {
         $db->sql_query($query);
 
         //On prépare la liste des attaques en BBCode
-        $bbcode = "[color=" . $bbcolor[title] . "][b]Liste des attaques de " . $user_data[user_name] . "[/b] [/color]\n";
+        $bbcode = "[color=" . $bbcolor[title] . "][b]". $lang['MOD_ATTAQUES_ATTACK_LIST'] . $user_data[user_name] . "[/b] [/color]\n";
         $bbcode .= "du 01/" . $month . "/" . $year . " au 31/" . $month . "/" . $year . "\n\n";
 
         while (list($attack_coord, $attack_date, $attack_metal, $attack_cristal, $attack_deut, $attack_pertes) = $db->sql_fetch_row($list)) {
             $attack_date = strftime("%d %b %Y %Hh%M", $attack_date);
-            $bbcode .= "Le " . $attack_date . " victoire en " . $attack_coord . ".\n";
+            $bbcode .= "Le " . $attack_date . $lang['MOD_ATTAQUES_VICTORY_COORD'] . $attack_coord . ".\n";
             $bbcode .= "[color=" . $bbcolor[m_g] . "]" . $attack_metal . "[/color] de métal, [color=" . $bbcolor[c_g] . "]" . $attack_cristal . "[/color] de cristal et [color=" . $bbcolor[d_g] . "]" . $attack_deut . "[/color] de deut&eacute;rium ont &eacute;t&eacute; rapport&eacute;s.\n";
-            $bbcode .= "Les pertes s'&eacute;lèvent à [color=" . $bbcolor[perte] . "]" . $attack_pertes . "[/color].\n\n";
+            $bbcode .= $lang['MOD_ATTAQUES_LOSS_MSG'] . "[color=" . $bbcolor[perte] . "]" . $attack_pertes . "[/color].\n\n";
         }
 
         $bbcode .= "[url=http://board.ogsteam.fr/forums/sujet-1358-mod-gestion-attaques]G&eacute;n&eacute;r&eacute; par le module de gestion des attaques[/url]";
 
         echo "<br><br>";
-        echo "<fieldset><legend><b><font color='#0080FF'>Liste de vos attaques du 01/" . $month . "/" . $year . " au 31/" . $month . "/" . $year . "</font></legend>";
+        echo "<fieldset><legend><b><font color='#0080FF'>".$lang['MOD_ATTAQUES_LISTE_ATTAQUES_01']."/" . $month . "/" . $year . " au 31/" . $month . "/" . $year . "</font></legend>";
         echo "<br>";
         echo "<form method='post'><textarea rows='10' cols='15' id='$bbcode'>$bbcode</textarea></form></fieldset>";
     }
@@ -120,18 +123,18 @@ if (isset($pub_attack_id)) {
     if ($user == $user_data['user_id']) {
         $query = "DELETE FROM " . TABLE_ATTAQUES_ATTAQUES . " WHERE attack_id='$pub_attack_id'";
         $db->sql_query($query);
-        echo "<blink><font color='FF0000'>L'attaque a bien été supprimée.</font></blink>";
+        echo "<blink><font color='FF0000'>" . $lang['MOD_ATTAQUES_ATTAQUE_SUPPRIMEE'] . "</font></blink>";
 
         //On ajoute l'action dans le log
-        $line = $user_data['user_name'] . " supprime l'une de ses attaque dans le module de gestion des attaques";
+        $line = $user_data['user_name'] . $lang['MOD_ATTAQUES_LOG_SUPPRIME'];
         $fichier = "log_" . date("ymd") . '.log';
         $line = "/*" . date("d/m/Y H:i:s") . '*/ ' . $line;
         write_file(PATH_LOG_TODAY . $fichier, "a", $line);
     } else {
-        echo "<blink><font color='FF0000'>Vous n'avez pas le droit d'effacer cette attaque !!!</font></blink>";
+        echo "<blink><font color='FF0000'>" . $lang['MOD_ATTAQUES_CANT_DELETE_ATTACK'] . "!!!</font></blink>";
 
         //On ajoute l'action dans le log
-        $line = $user_data[user_name] . " a tenté de supprimer une attaque qui appartient à un autre utilisateurs dans le module de gestion des attaques";
+        $line = $user_data[user_name] . $lang['MOD_ATTAQUES_DELETE_WRONG_USER'];
         $fichier = "log_" . date("ymd") . '.log';
         $line = "/*" . date("d/m/Y H:i:s") . '*/ ' . $line;
         write_file(PATH_LOG_TODAY . $fichier, "a", $line);
@@ -235,23 +238,21 @@ $pub_date_to = strftime("%d %b %Y %H:%M", $pub_date_to);
 
 
 //Création du field pour choisir l'affichage (attaque du jour, de la semaine ou du mois
-echo "<fieldset><legend><b><font color='#0080FF'>Paramètres d'affichage des attaques ";
+echo "<fieldset><legend><b><font color='#0080FF'>" . $lang['MOD_ATTAQUES_PARAMETRES_AFFICHAGE_ATTAQUES'];
 echo help("changer_affichage");
 echo "</font></b></legend>";
 
-echo "Afficher les attaques : ";
+echo $lang['MOD_ATTAQUES_AFFICHER_ATTAQUES'];
 echo "<form action='index.php?action=attaques&page=attaques' method='post' name='date'>";
-echo "du : <input type='text' name='date_from' id='date_from' size='15' value='$pub_date_from' /> ";
-echo "au : ";
+echo $lang['MOD_ATTAQUES_DU'] . ": <input type='text' name='date_from' id='date_from' size='15' value='$pub_date_from' /> ";
+echo $lang['MOD_ATTAQUES_AU'];
 echo "<input type='text' name='date_to' id='date_to' size='15' value='$pub_date_to' />";
 echo "<br>";
 ?>
-<a href="#haut" onclick="setDateFrom('<?php echo $date; ?>'); setDateTo('<?php echo $date; ?>'); valid();">du jour</a> |
-<a href="#haut" onclick="setDateFrom('<?php echo $yesterday; ?>'); setDateTo('<?php echo $yesterday; ?>'); valid();">de
-    la veille</a> |
-<a href="#haut" onclick="setDateFrom('<?php echo $septjours; ?>'); setDateTo('<?php echo $date; ?>'); valid();">des 7
-    derniers jours</a> |
-<a href="#haut" onclick="setDateFrom('01'); setDateTo('<?php echo $date; ?>'); valid();">du mois</a>
+<a href="#haut" onclick="setDateFrom('<?php echo $date; ?>'); setDateTo('<?php echo $date; ?>'); valid();"><?php echo $lang['MOD_ATTAQUES_DU_JOUR']; ?></a> |
+<a href="#haut" onclick="setDateFrom('<?php echo $yesterday; ?>'); setDateTo('<?php echo $yesterday; ?>'); valid();"><?php echo $lang['MOD_ATTAQUES_DE_LA_VEILLE']; ?></a> |
+<a href="#haut" onclick="setDateFrom('<?php echo $septjours; ?>'); setDateTo('<?php echo $date; ?>'); valid();"><?php echo $lang['MOD_ATTAQUES_7_ERNIERS_JOURS']; ?></a> |
+<a href="#haut" onclick="setDateFrom('01'); setDateTo('<?php echo $date; ?>'); valid();"><?php echo $lang['MOD_ATTAQUES_DU_MOIS']; ?></a>
 <br />
 <select name="user_id">
 	<?php foreach($users as $id => $username)
@@ -267,12 +268,12 @@ echo "<br>";
 
 
 echo "<br><br>";
-echo "<input type='submit' value='Afficher' name='B1'></form>";
+echo "<input type='submit' value='" . $lang['MOD_ATTAQUES_AFFICHER'] . "' name='B1'></form>";
 echo "</fieldset>";
 echo "<br><br>";
 
 //Création du field pour voir les gains des attaques
-echo "<fieldset><legend><b><font color='#0080FF'>Résultats des attaques du " . $pub_date_from . " au " . $pub_date_to . " de " . $users[$user_id];
+echo "<fieldset><legend><b><font color='#0080FF'>" . $lang['MOD_ATTAQUES_RESULTATS_ATTAQUE'] . $pub_date_from . $lang['MOD_ATTAQUES_AU'] . $pub_date_to . $lang['MOD_ATTAQUES_DE'] . $users[$user_id];
 echo help("resultats");
 echo "</font></b></legend>";
 
@@ -289,19 +290,19 @@ $renta = $totalgains - $attack_pertes;
 echo "<table width='100%'><tr align='left'>";
 
 
-echo "<td width='25%'>" . "<table width='100%'><colgroup><col width='40%'/><col/></colgroup><tbody>" . "<tr>" . "<td style='font-size: 18px;color: white;'><b>M&eacute;tal</b></td>" . "<td class='metal number' style='font-size: 18px;'>" . number_format($attack_metal, 0, ',', ' ') . "</td>" . "</tr><tr>" . "<td style='font-size: 18px;color: white;'><b>Cristal</b></td>" . "<td class='cristal number' style='font-size: 18px;'>" . number_format($attack_cristal, 0, ',', ' ') . "</td>" . "</tr><tr>" . "<td style='font-size: 18px;color: white;'><b>Deut&eacute;rium</b></td>" . "<td class='deuterium number' style='font-size: 18px;'>" . number_format($attack_deut, 0, ',', ' ') . "</td>" . "</tr><tr>" . "<td style='font-size: 18px;color: white;'><b>Gains</b></td>" . "<td class='number' style='font-size: 18px;color: white;'>" . number_format($totalgains, 0, ',', ' ') . "</td>" . "</tr><tr>" . "<td style='font-size: 18px;color: white;'><b>Pertes</b></td>" . "<td class='perte number' style='font-size: 18px;'>" . number_format($attack_pertes, 0, ',', ' ') . "</td>" . "</tr><tr>" . "<td style='font-size: 18px;color: white;'><b>Rentabilit&eacute;</b></td>" . "<td class='renta number' style='font-size: 18px;'>" . number_format($renta, 0, ',', ' ') . "</td>" . "</tr><tbody></table></td>";
+echo "<td width='25%'>" . "<table width='100%'><colgroup><col width='40%'/><col/></colgroup><tbody>" . "<tr>" . "<td style='font-size: 18px;color: white;'><b>". $lang['MOD_ATTAQUES_METAL'] ."</b></td>" . "<td class='metal number' style='font-size: 18px;'>" . number_format($attack_metal, 0, ',', ' ') . "</td>" . "</tr><tr>" . "<td style='font-size: 18px;color: white;'><b>". $lang['MOD_ATTAQUES_CRISTAL'] ."</b></td>" . "<td class='cristal number' style='font-size: 18px;'>" . number_format($attack_cristal, 0, ',', ' ') . "</td>" . "</tr><tr>" . "<td style='font-size: 18px;color: white;'><b>". $lang['MOD_ATTAQUES_DEUT'] ."</b></td>" . "<td class='deuterium number' style='font-size: 18px;'>" . number_format($attack_deut, 0, ',', ' ') . "</td>" . "</tr><tr>" . "<td style='font-size: 18px;color: white;'><b>". $lang['MOD_ATTAQUES_GAINS'] ."</b></td>" . "<td class='number' style='font-size: 18px;color: white;'>" . number_format($totalgains, 0, ',', ' ') . "</td>" . "</tr><tr>" . "<td style='font-size: 18px;color: white;'><b>". $lang['MOD_ATTAQUES_PERTES'] ."</b></td>" . "<td class='perte number' style='font-size: 18px;'>" . number_format($attack_pertes, 0, ',', ' ') . "</td>" . "</tr><tr>" . "<td style='font-size: 18px;color: white;'><b>". $lang['MOD_ATTAQUES_RENTABILITE'] ."</b></td>" . "<td class='renta number' style='font-size: 18px;'>" . number_format($renta, 0, ',', ' ') . "</td>" . "</tr><tbody></table></td>";
 
 // Afficher l'image du graphique
 echo "<td width='75%' align='center'>";
 
 if ((!isset($attack_metal)) && (!isset($attack_cristal)) && (!isset($attack_deut)) && (!isset($attack_pertes))) {
-    echo "Pas de graphique disponible";
+    echo $lang['MOD_ATTAQUES_GRAPHIQUE_DISPONIBLE'];
 } else {
     /** GRAPHIQUE **/
     echo "<div id='graphique' style='height: 350px; width: 800px; margin: 0pt auto; clear: both;'></div>";
     /** GRAPHIQUE **/
 
-    echo create_pie_numbers($attack_metal . "_x_" . $attack_cristal . "_x_" . $attack_deut . "_x_" . $attack_pertes, "Métal_x_Cristal_x_Deutérium_x_Pertes", "Gains des Attaques", "graphique");
+    echo create_pie_numbers($attack_metal . "_x_" . $attack_cristal . "_x_" . $attack_deut . "_x_" . $attack_pertes, $lang['MOD_ATTAQUES_RESOURCE_PIE'], $lang['MOD_ATTAQUES_GAINS_ATTAQUES'], 'graphique');
 }
 echo "</td></tr>";
 
@@ -310,8 +311,8 @@ echo "</table>";
 echo "</p></fieldset><br><br>";
 
 //Création du field pour voir la liste des attaques
-echo "<fieldset><legend><b><font color='#0080FF'>Liste des attaques du " . $pub_date_from . " au " . $pub_date_to . " ";
-echo " : " . $nb_attack . " attaque(s) ";
+echo "<fieldset><legend><b><font color='#0080FF'>" . $lang['MOD_ATTAQUES_ATTACK_LIST'] . $pub_date_from . $lang['MOD_ATTAQUES_AU'] . $pub_date_to . " ";
+echo " : " . $nb_attack . $lang['MOD_ATTAQUES_ATTAQUES'];
 echo help("liste_attaques");
 echo "</font></b></legend>";
 
@@ -321,13 +322,13 @@ $link = "index.php?action=attaques&date_from=" . $pub_date_from . "&date_to=" . 
 //Tableau donnant la liste des attaques
 echo "<table width='100%'>";
 echo "<tr>";
-echo "<td class=" . 'c' . " align=" . 'center' . "><a href='" . $link . "&order_by=attack_coord&sens=1'><img src='" . $prefixe . "images/asc.png'></a> <b>Coordonnées</b> <a href='" . $link . "&order_by=attack_coord&sens=2'><img src='" . $prefixe . "images/desc.png'></a></td>";
-echo "<td class=" . 'c' . " align=" . 'center' . "><a href='" . $link . "&order_by=attack_date&sens=1'><img src='" . $prefixe . "images/asc.png'></a> <b>Date de l'Attaque</b> <a href='" . $link . "&order_by=attack_date&sens=2'><img src='" . $prefixe . "images/desc.png'></a></td>";
-echo "<td class=" . 'c' . " align=" . 'center' . "><a href='" . $link . "&order_by=attack_metal&sens=1'><img src='" . $prefixe . "images/asc.png'></a> <b>Métal Gagné</b> <a href='" . $link . "&order_by=attack_metal&sens=2'><img src='" . $prefixe . "images/desc.png'></a></td>";
-echo "<td class=" . 'c' . " align=" . 'center' . "><a href='" . $link . "&order_by=attack_cristal&sens=1'><img src='" . $prefixe . "images/asc.png'></a> <b>Cristal Gagné</b> <a href='" . $link . "&order_by=attack_cristal&sens=2'><img src='" . $prefixe . "images/desc.png'></a></td>";
-echo "<td class=" . 'c' . " align=" . 'center' . "><a href='" . $link . "&order_by=attack_deut&sens=1'><img src='" . $prefixe . "images/asc.png'></a> <b>Deut&eacute;rium Gagné</b> <a href='" . $link . "&order_by=attack_deut&sens=2'><img src='" . $prefixe . "images/desc.png'></a></td>";
-echo "<td class=" . 'c' . " align=" . 'center' . "><a href='" . $link . "&order_by=attack_pertes&sens=1'><img src='" . $prefixe . "images/asc.png'></a> <b>Pertes Attaquant</b> <a href='" . $link . "&order_by=attack_pertes&sens=2'><img src='" . $prefixe . "images/desc.png'></a></td>";
-echo "<td class=" . 'c' . " align=" . 'center' . "><b><font color='#FF0000'>Supprimer</font></b></td>";
+echo "<td class=" . 'c' . " align=" . 'center' . "><a href='" . $link . "&order_by=attack_coord&sens=1'><img src='" . $prefixe . "images/asc.png'></a> <b>" . $lang['MOD_ATTAQUES_COORDONNEES'] . "</b> <a href='" . $link . "&order_by=attack_coord&sens=2'><img src='" . $prefixe . "images/desc.png'></a></td>";
+echo "<td class=" . 'c' . " align=" . 'center' . "><a href='" . $link . "&order_by=attack_date&sens=1'><img src='" . $prefixe . "images/asc.png'></a> <b>" . $lang['MOD_ATTAQUES_DATE_ATTAQUE'] ."</b> <a href='" . $link . "&order_by=attack_date&sens=2'><img src='" . $prefixe . "images/desc.png'></a></td>";
+echo "<td class=" . 'c' . " align=" . 'center' . "><a href='" . $link . "&order_by=attack_metal&sens=1'><img src='" . $prefixe . "images/asc.png'></a> <b>". $lang['MOD_ATTAQUES_METAL_GAGNE'] ."</b> <a href='" . $link . "&order_by=attack_metal&sens=2'><img src='" . $prefixe . "images/desc.png'></a></td>";
+echo "<td class=" . 'c' . " align=" . 'center' . "><a href='" . $link . "&order_by=attack_cristal&sens=1'><img src='" . $prefixe . "images/asc.png'></a> <b>". $lang['MOD_ATTAQUES_CRISTAL_GAGNE'] ."</b> <a href='" . $link . "&order_by=attack_cristal&sens=2'><img src='" . $prefixe . "images/desc.png'></a></td>";
+echo "<td class=" . 'c' . " align=" . 'center' . "><a href='" . $link . "&order_by=attack_deut&sens=1'><img src='" . $prefixe . "images/asc.png'></a> <b>". $lang['MOD_ATTAQUES_DEUT_GAGNE'] ."</b> <a href='" . $link . "&order_by=attack_deut&sens=2'><img src='" . $prefixe . "images/desc.png'></a></td>";
+echo "<td class=" . 'c' . " align=" . 'center' . "><a href='" . $link . "&order_by=attack_pertes&sens=1'><img src='" . $prefixe . "images/asc.png'></a> <b>". $lang['MOD_ATTAQUES_PERTES_ATTAQUANT'] ."</b> <a href='" . $link . "&order_by=attack_pertes&sens=2'><img src='" . $prefixe . "images/desc.png'></a></td>";
+echo "<td class=" . 'c' . " align=" . 'center' . "><b><font color='#FF0000'>". $lang['MOD_ATTAQUES_SUPPRIMER'] ."</font></b></td>";
 
 echo "</tr>";
 echo "<tr>";
@@ -352,7 +353,7 @@ while (list($attack_coord, $attack_date, $attack_metal, $attack_cristal, $attack
 	
 	if($estUtilisateurCourant)
 	{
-		echo "<form action='index.php?action=attaques&page=attaques' method='post'><input type='hidden' name='date_from' value='$pub_date_from'><input type='hidden' name='date_to' value='$pub_date_to'><input type='hidden' name='attack_id' value='$attack_id'><input type='submit'	value='Supprimer' name='B1' style='color: #FF0000'></form>";
+		echo "<form action='index.php?action=attaques&page=attaques' method='post'><input type='hidden' name='date_from' value='$pub_date_from'><input type='hidden' name='date_to' value='$pub_date_to'><input type='hidden' name='attack_id' value='$attack_id'><input type='submit'	value='" . $lang['MOD_ATTAQUES_SUPPRIMER'] ."' name='B1' style='color: #FF0000'></form>";
 	}
 	echo "</th>";
     echo "</tr>";
@@ -424,7 +425,7 @@ if ($config['histo'] == 1) {
         }
     }
 
-    $series = "{name: 'Métal', data: [" . $metal . "] }, " . "{name: 'Cristal', data: [" . $cristal . "] }, " . "{name: 'Deutérium', data: [" . $deuterium . "] }";
+    $series = "{name: '" . $lang['MOD_ATTAQUES_METAL'] . "', data: [" . $metal . "] }, " . "{name:  '" . $lang['MOD_ATTAQUES_CRISTAL'] . "', data: [" . $cristal . "] }, " . "{name:  '" . $lang['MOD_ATTAQUES_DEUT'] . "', data: [" . $deuterium . "] }";
 
     /** GRAPHIQUE **/
     echo "<div id='graphiquemois' style='height: 350px; width: 1200px; margin: 0pt auto; clear: both;'></div>";
@@ -471,7 +472,7 @@ if ($config['histo'] == 1) {
                                       plotBorderWidth: 1
                                   },
                                   title: {
-                                     text: 'Historique du mois'
+                                     text: '" . $lang["MOD_ATTAQUES_HISTORIQUE_MOIS"] ."'
                                   },
                                   xAxis: {
                                      categories: [" . $categories . "]
@@ -479,7 +480,7 @@ if ($config['histo'] == 1) {
                                   yAxis: {
                                      min: 0,
                                      title: {
-                                        text: 'Quantité'
+                                        text: '". $lang['MOD_ATTAQUES_QUANTITE'] ."'
                                      }
                                   },
                                   legend: {
